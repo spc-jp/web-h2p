@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web制作ヒヤリングシート | Design Partner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        accent: {
+                            500: '#f59e0b', // Amber for emphasis
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Custom Scrollbar for textareas */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .step-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* Toast Animation */
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.5s linear;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="font-bold text-lg text-primary-600 dark:text-primary-400 flex items-center">
+                <i class="fa-solid fa-pen-nib mr-2"></i>
+                <span class="hidden sm:inline">Web制作ヒヤリング</span>
+                <span class="sm:hidden">ヒヤリング</span>
+            </h1>
+            
+            <div class="flex items-center gap-2">
+                <!-- Help Button -->
+                <button onclick="toggleModal('helpModal')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition" title="使い方">
+                    <i class="fa-regular fa-circle-question text-xl"></i>
+                </button>
+                
+                <!-- Settings Button -->
+                <div class="relative">
+                    <button onclick="toggleDropdown('settingsDropdown')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition" title="設定">
+                        <i class="fa-solid fa-gear text-xl"></i>
+                    </button>
+                    
+                    <!-- Settings Dropdown -->
+                    <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden transform origin-top-right transition-all">
+                        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">表示設定</h3>
+                            <button id="themeToggleBtn" class="w-full flex items-center justify-between p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                <span class="text-sm font-medium"><i class="fa-solid fa-moon dark:hidden mr-2"></i><i class="fa-solid fa-sun hidden dark:inline mr-2"></i>モード切替</span>
+                                <span class="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded shadow-sm">Dark/Light</span>
+                            </button>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800/50">
+                            <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">デモ機能</h3>
+                            <button onclick="confirmDemoData()" class="w-full text-left text-sm text-primary-600 dark:text-primary-400 hover:underline mb-3 flex items-center">
+                                <i class="fa-solid fa-magic-wand-sparkles mr-2"></i>デモデータを入力
+                            </button>
+                            <button onclick="confirmClearData()" class="w-full text-left text-xs text-gray-400 hover:text-red-500 hover:underline transition flex items-center">
+                                <i class="fa-regular fa-trash-can mr-2"></i>データを全て削除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 dark:bg-gray-700 h-1">
+            <div id="progressBar" class="bg-primary-500 h-1 transition-all duration-500 ease-out" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container max-w-2xl mx-auto px-4 py-8 pb-32 relative">
+        <form id="hearingForm" onsubmit="return false;">
+            <!-- Dynamic Content Area -->
+            <div id="stepContainer" class="min-h-[60vh]">
+                <!-- Steps will be injected here by JS -->
+            </div>
+        </form>
+    </main>
+
+    <!-- Footer / Navigation -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
+        <div class="max-w-2xl mx-auto flex justify-between gap-4">
+            <button id="prevBtn" onclick="prevStep()" class="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition hidden">
+                戻る
+            </button>
+            <button id="nextBtn" onclick="nextStep()" class="flex-1 px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-500/30 transition transform active:scale-95 flex items-center justify-center">
+                <span>次へ進む</span>
+                <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="toggleModal('helpModal')"></div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden transform transition-all">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white"><i class="fa-regular fa-circle-question mr-2 text-primary-500"></i>使い方ガイド</h2>
+                    <button onclick="toggleModal('helpModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div class="prose dark:prose-invert text-sm text-gray-600 dark:text-gray-300 space-y-4">
+                    <p>
+                        Web制作の要件定義（ヒヤリング）をスムーズに行うためのアプリです。<br>
+                        クライアントと一緒に画面を見ながら入力するか、ご自身で要件を整理する際にお使いください。
+                    </p>
+                    <div class="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-xl">
+                        <h3 class="font-bold text-primary-700 dark:text-primary-300 mb-2">💡 便利な機能</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>自動保存:</strong> 入力内容はブラウザに自動保存されます。</li>
+                            <li><strong>構成案作成:</strong> LPか複数ページかによって、最適な質問に切り替わります。</li>
+                            <li><strong>要件定義書出力:</strong> 最後に生成されるテキストは、そのまま制作会社への依頼やAIへのプロンプトに使えます。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 text-right">
+                    <button onclick="toggleModal('helpModal')" class="px-5 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal (Generic) -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm relative p-6 transform transition-all">
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-900 dark:text-white mb-2">確認</h3>
+            <p id="confirmMessage" class="text-sm text-gray-600 dark:text-gray-300 mb-6">本当に実行しますか？</p>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm">
+                    キャンセル
+                </button>
+                <button id="confirmOkBtn" class="px-4 py-2 rounded-lg bg-primary-600 text-white font-bold hover:bg-primary-700 transition text-sm shadow-lg shadow-primary-500/30">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900/90 dark:bg-white/90 text-white dark:text-gray-900 px-6 py-3 rounded-full shadow-xl z-[80] text-sm font-medium flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-green-400 dark:text-green-500"></i>
+        <span id="toastMessage">完了しました</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const totalSteps = 10; // 0 to 9
+        let currentStep = 0;
+        
+        // Form Data Store
+        let formData = {
+            interviewer: { company: '', name: '' }, 
+            siteType: 'lp', 
+            basicInfo: {},
+            purpose: {},
+            target: {},
+            design: { keywords: [], color: '#3b82f6' },
+            specs: { features: [] },
+            seo: {},
+            assets: {},
+            extra: '',
+            structure: {} 
+        };
+
+        // --- Step Renderers ---
+        const renderers = {
+            0: renderStep0, 
+            1: renderStep1, 
+            2: renderStep2, 
+            3: renderStep3, 
+            4: renderStep4, 
+            5: renderStep5, 
+            6: renderStep6, 
+            7: renderStep7, 
+            8: renderStep8, 
+            9: renderStep9, 
+            10: renderSummary 
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderStep();
+            setupSettings();
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('settingsDropdown');
+                const btn = e.target.closest('button[onclick^="toggleDropdown"]');
+                if (!btn && !dropdown.contains(e.target) && !dropdown.classList.contains('hidden')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+
+        function setupSettings() {
+            const themeBtn = document.getElementById('themeToggleBtn');
+            
+            // Initial Theme Check
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+
+            themeBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            });
+        }
+
+        // --- UI Interaction ---
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.toggle('hidden');
+        }
+
+        function toggleDropdown(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        // Custom Confirm Modal Logic
+        let confirmCallback = null;
+
+        function showConfirm(message, callback) {
+            document.getElementById('confirmMessage').innerHTML = message;
+            confirmCallback = callback;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirmOkBtn').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        // Toast Notification Logic
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- Navigation Logic ---
+        function nextStep() {
+            if (!validateCurrentStep()) return;
+            saveCurrentStepData();
+            
+            if (currentStep < totalSteps) {
+                currentStep++;
+                renderStep();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderStep();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function renderStep() {
+            const container = document.getElementById('stepContainer');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const progressBar = document.getElementById('progressBar');
+
+            // Update Progress Bar
+            const progress = (currentStep / totalSteps) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Button Visibility
+            if (currentStep === 0) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            if (currentStep === totalSteps) {
+                // Summary Page
+                nextBtn.classList.add('hidden');
+                prevBtn.innerHTML = "修正する";
+            } else {
+                nextBtn.classList.remove('hidden');
+                nextBtn.innerHTML = currentStep === totalSteps - 1 ? 
+                    `<span>完了して内容を確認</span><i class="fa-solid fa-check ml-2"></i>` : 
+                    `<span>次へ進む</span><i class="fa-solid fa-arrow-right ml-2"></i>`;
+                prevBtn.innerHTML = "戻る";
+            }
+
+            // Render Content
+            container.innerHTML = `<div class="fade-in">${renderers[currentStep]()}</div>`;
+            
+            // Re-attach listeners
+            attachDynamicListeners();
+        }
+
+        function attachDynamicListeners() {
+            const colorInput = document.getElementById('mainColor');
+            if (colorInput) {
+                colorInput.addEventListener('input', (e) => {
+                    document.getElementById('colorPreview').style.backgroundColor = e.target.value;
+                    document.getElementById('colorCode').innerText = e.target.value;
+                });
+            }
+        }
+
+        function validateCurrentStep() {
+            if (currentStep === 0 && !formData.siteType) {
+                showToast("作成したいサイトのタイプを選んでください");
+                return false;
+            }
+            if (currentStep === 1) {
+                 const name = document.getElementById('companyName').value;
+                 if(!name) {
+                     showToast("会社名または屋号は必須です");
+                     return false;
+                 }
+            }
+            return true;
+        }
+
+        function saveCurrentStepData() {
+            switch(currentStep) {
+                case 0:
+                    const typeInputs = document.getElementsByName('siteType');
+                    for(let r of typeInputs) { if(r.checked) formData.siteType = r.value; }
+                    break;
+                case 1:
+                    formData.interviewer = {
+                        company: document.getElementById('interviewerCompany').value,
+                        name: document.getElementById('interviewerName').value
+                    };
+                    formData.basicInfo = {
+                        name: document.getElementById('companyName').value,
+                        pic: document.getElementById('picName').value,
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        address: document.getElementById('address').value,
+                        hours: document.getElementById('hours').value,
+                        siteName: document.getElementById('siteName').value,
+                        status: document.getElementById('projectStatus').value
+                    };
+                    break;
+                case 2:
+                    formData.purpose = {
+                        objective: document.getElementById('objective').value,
+                        business: document.getElementById('business').value,
+                        goal: document.getElementById('goal').value,
+                        kpi: document.getElementById('kpi').value,
+                        issues: document.getElementById('issues').value
+                    };
+                    break;
+                case 3:
+                    formData.target = {
+                        persona: document.getElementById('persona').value,
+                        competitors: document.getElementById('competitors').value,
+                        reference: document.getElementById('reference').value
+                    };
+                    break;
+                case 4:
+                    const keywords = [];
+                    document.querySelectorAll('input[name="designKeyword"]:checked').forEach(cb => keywords.push(cb.value));
+                    formData.design = {
+                        keywords: keywords,
+                        color: document.getElementById('mainColor').value,
+                        font: document.getElementById('fontSpec').value
+                    };
+                    break;
+                case 5:
+                    const features = [];
+                    document.querySelectorAll('input[name="features"]:checked').forEach(cb => features.push(cb.value));
+                    formData.specs = {
+                        devices: "PC / スマホレスポンシブ",
+                        cms: document.getElementById('cms').value,
+                        features: features,
+                        other: document.getElementById('otherFeatures').value
+                    };
+                    break;
+                case 6:
+                    formData.seo = {
+                        keywords: document.getElementById('seoKeywords').value,
+                        exclude: document.getElementById('seoExclude').value,
+                        tools: document.getElementById('analytics').value
+                    };
+                    break;
+                case 7:
+                    formData.assets = {
+                        logo: getRadioValue('assetLogo'),
+                        photo: getRadioValue('assetPhoto'),
+                        text: getRadioValue('assetText'),
+                        deadline: document.getElementById('deadline').value
+                    };
+                    break;
+                case 8:
+                    formData.extra = document.getElementById('freeText').value;
+                    break;
+                case 9:
+                    if (formData.siteType === 'lp') {
+                        formData.structure = {
+                            lpMessage: document.getElementById('lpMessage').value,
+                            lpAnxiety: document.getElementById('lpAnxiety').value,
+                            lpSolution: document.getElementById('lpSolution').value,
+                            lpCta: document.getElementById('lpCta').value
+                        };
+                    } else {
+                        const pages = [];
+                        document.querySelectorAll('input[name="pages"]:checked').forEach(cb => pages.push(cb.value));
+                        formData.structure = {
+                            pages: pages,
+                            priorityPage: document.getElementById('priorityPage').value
+                        };
+                    }
+                    break;
+            }
+            saveState(); 
+        }
+
+        // --- Demo Data & Clear Data with Custom Modal ---
+        function confirmDemoData() {
+            showConfirm("現在の入力内容は上書きされます。<br>デモデータを入力しますか？", () => {
+                generateDemoDataLogic();
+            });
+        }
+
+        function generateDemoDataLogic() {
+            formData = {
+                interviewer: { company: '株式会社ウェブパートナー', name: '山田 太郎' },
+                siteType: 'lp',
+                basicInfo: {
+                    name: '株式会社サンプルテック',
+                    pic: '鈴木 一郎',
+                    email: 'info@sample-tech.co.jp',
+                    phone: '03-1234-5678',
+                    address: '東京都渋谷区...',
+                    hours: '平日10:00-19:00',
+                    siteName: 'SampleTech Official',
+                    status: 'リニューアル'
+                },
+                purpose: {
+                    objective: '新商品の認知拡大とオンライン販売の強化',
+                    business: 'AIを活用した業務効率化ツールの開発・販売',
+                    goal: 'お問い合わせ',
+                    kpi: '月間リード獲得数50件',
+                    issues: '製品の魅力が伝わりきっておらず、離脱が多い'
+                },
+                target: {
+                    persona: '中小企業のDX推進担当者、30-40代男性',
+                    competitors: '競合A社、Bツール',
+                    reference: 'https://example.com (このサイトの清潔感が好き)'
+                },
+                design: {
+                    keywords: ['信頼感', '知的', 'シンプル'],
+                    color: '#2563eb',
+                    font: 'Noto Sans JP'
+                },
+                specs: {
+                    devices: "PC / スマホレスポンシブ",
+                    cms: 'WordPress',
+                    features: ['お問い合わせフォーム', 'お知らせ機能'],
+                    other: '読み込み速度を重視したい'
+                },
+                seo: {
+                    keywords: '業務効率化 AI, DXツール 中小企業',
+                    exclude: '安売り、格安',
+                    tools: 'GA4導入希望'
+                },
+                assets: {
+                    logo: 'あり',
+                    photo: '依頼したい',
+                    text: 'あり',
+                    deadline: '3ヶ月以内'
+                },
+                extra: '専門用語をなるべく使わず、分かりやすい言葉で説明したい。',
+                structure: {
+                    lpMessage: 'AIで業務時間を50%削減',
+                    lpAnxiety: '導入が難しそう、コストが高い',
+                    lpSolution: '専任サポートあり、月額980円から',
+                    lpCta: '無料トライアルに申し込む'
+                }
+            };
+            
+            saveState();
+            currentStep = 0;
+            renderStep();
+            document.getElementById('settingsDropdown').classList.add('hidden');
+            showToast("デモデータを入力しました");
+        }
+
+        function confirmClearData() {
+            showConfirm("本当に入力データを全て削除しますか？<br>この操作は取り消せません。", () => {
+                clearDataLogic();
+            });
+        }
+
+        function clearDataLogic() {
+             localStorage.removeItem('hearingFormData');
+             // Reset to defaults
+             formData = {
+                interviewer: { company: '', name: '' },
+                siteType: 'lp',
+                basicInfo: {},
+                purpose: {},
+                target: {},
+                design: { keywords: [], color: '#3b82f6' },
+                specs: { features: [] },
+                seo: {},
+                assets: {},
+                extra: '',
+                structure: {}
+            };
+            currentStep = 0;
+            renderStep();
+            document.getElementById('settingsDropdown').classList.add('hidden');
+            showToast("データを削除しました");
+        }
+
+        // --- Helpers ---
+        function getRadioValue(name) {
+            const els = document.getElementsByName(name);
+            for (let el of els) { if (el.checked) return el.value; }
+            return '';
+        }
+
+        function saveState() {
+            localStorage.setItem('hearingFormData', JSON.stringify(formData));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('hearingFormData');
+            if (saved) {
+                formData = JSON.parse(saved);
+                if (!formData.interviewer) formData.interviewer = { company: '', name: '' };
+            }
+        }
+
+        // --- Rendering Functions (HTML Generators) ---
+
+        function renderHeader(title, subtitle) {
+            return `
+                <div class="mb-6">
+                    <span class="text-xs font-bold tracking-widest text-primary-600 dark:text-primary-400 uppercase">STEP ${currentStep}</span>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">${title}</h2>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">${subtitle}</p>
+                </div>
+            `;
+        }
+
+        function renderStep0() {
+            const isLp = formData.siteType === 'lp';
+            return `
+                ${renderHeader("作りたいサイトのタイプは？", "プロジェクトの方向性を決める一番大切な質問です。")}
+                <div class="grid gap-4 md:grid-cols-2 mt-8">
+                    <label class="cursor-pointer relative group">
+                        <input type="radio" name="siteType" value="lp" class="peer sr-only" ${isLp ? 'checked' : ''}>
+                        <div class="p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 transition-all h-full">
+                            <div class="text-4xl text-primary-500 mb-4"><i class="fa-solid fa-scroll"></i></div>
+                            <h3 class="font-bold text-lg mb-2">シングルページ (LP)</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                縦長の1ページ完結型。<br>
+                                商品やサービスの魅力を一点集中で伝え、申し込みや購入に繋げるのに最適です。
+                            </p>
+                            <div class="absolute top-4 right-4 text-primary-600 opacity-0 peer-checked:opacity-100 transition">
+                                <i class="fa-solid fa-circle-check text-2xl"></i>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="cursor-pointer relative group">
+                        <input type="radio" name="siteType" value="corp" class="peer sr-only" ${!isLp ? 'checked' : ''}>
+                        <div class="p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-400 peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 transition-all h-full">
+                            <div class="text-4xl text-blue-500 mb-4"><i class="fa-solid fa-sitemap"></i></div>
+                            <h3 class="font-bold text-lg mb-2">コーポレートサイト</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                会社概要、サービス、実績など複数ページで構成。<br>
+                                信頼感を醸成し、情報を体系的に伝えたい場合に適しています。
+                            </p>
+                            <div class="absolute top-4 right-4 text-primary-600 opacity-0 peer-checked:opacity-100 transition">
+                                <i class="fa-solid fa-circle-check text-2xl"></i>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            `;
+        }
+
+        function renderStep1() {
+            return `
+                ${renderHeader("基本情報を教えてください", "ヒヤリング担当者（制作側）とクライアント様の情報を入力します。")}
+                
+                <!-- ヒヤリング担当者情報 -->
+                <div class="mb-8 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-100 dark:border-primary-800/50">
+                    <h3 class="text-sm font-bold text-primary-700 dark:text-primary-300 mb-3"><i class="fa-solid fa-user-tie mr-2"></i>ヒヤリング実施者（制作側）</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">制作会社名</label>
+                            <input type="text" id="interviewerCompany" value="${formData.interviewer?.company || ''}" class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="自社名を入力">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">担当者名</label>
+                            <input type="text" id="interviewerName" value="${formData.interviewer?.name || ''}" class="w-full p-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="あなたの名前">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 border-b pb-2 border-gray-200 dark:border-gray-700">クライアント様情報</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">会社名 / 屋号 <span class="text-red-500">*</span></label>
+                        <input type="text" id="companyName" value="${formData.basicInfo.name || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="例：株式会社デザインパートナー">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">ご担当者名</label>
+                        <input type="text" id="picName" value="${formData.basicInfo.pic || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">メールアドレス</label>
+                            <input type="email" id="email" value="${formData.basicInfo.email || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">電話番号</label>
+                            <input type="tel" id="phone" value="${formData.basicInfo.phone || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">住所</label>
+                        <input type="text" id="address" value="${formData.basicInfo.address || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">営業時間 / 定休日</label>
+                        <input type="text" id="hours" value="${formData.basicInfo.hours || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="例：平日10:00-18:00 / 土日祝休み">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">サイト名 (決まっていれば)</label>
+                        <input type="text" id="siteName" value="${formData.basicInfo.siteName || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">制作種別</label>
+                        <select id="projectStatus" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                            <option value="新規制作" ${formData.basicInfo.status === '新規制作' ? 'selected' : ''}>新規制作</option>
+                            <option value="リニューアル" ${formData.basicInfo.status === 'リニューアル' ? 'selected' : ''}>リニューアル</option>
+                            <option value="部分改修" ${formData.basicInfo.status === '部分改修' ? 'selected' : ''}>部分改修</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStep2() {
+            return `
+                ${renderHeader("目的とゴール", "Webサイトを通じて達成したいことは何ですか？")}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Webサイトを作る目的</label>
+                        <textarea id="objective" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="例：名刺代わりに信頼できる情報源を作りたい">${formData.purpose.objective || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">事業内容 / ビジネスモデル</label>
+                        <textarea id="business" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="誰に・何を・どのように提供していますか？">${formData.purpose.business || ''}</textarea>
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium mb-1">サイトのゴール (CV)</label>
+                        <select id="goal" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">
+                            <option value="お問い合わせ" ${formData.purpose.goal === 'お問い合わせ' ? 'selected' : ''}>お問い合わせ獲得</option>
+                            <option value="資料請求" ${formData.purpose.goal === '資料請求' ? 'selected' : ''}>資料請求</option>
+                            <option value="購入・予約" ${formData.purpose.goal === '購入・予約' ? 'selected' : ''}>商品購入・来店予約</option>
+                            <option value="採用応募" ${formData.purpose.goal === '採用応募' ? 'selected' : ''}>採用応募</option>
+                            <option value="認知拡大" ${formData.purpose.goal === '認知拡大' ? 'selected' : ''}>認知拡大・ブランディング</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">目標数値 (KPI) / 現在の課題</label>
+                        <textarea id="kpi" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="例：月間10件の問い合わせが欲しい。現状は電話対応が多く大変。">${formData.purpose.kpi || ''}</textarea>
+                    </div>
+                    <input type="hidden" id="issues" value="">
+                </div>
+            `;
+        }
+
+        function renderStep3() {
+            return `
+                ${renderHeader("ターゲットと競合", "誰に見てほしくて、誰と比較されますか？")}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">理想のお客様像 (ペルソナ)</label>
+                        <textarea id="persona" rows="3" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="例：30代〜40代の女性、子育て中で時短家電を探している方">${formData.target.persona || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">競合他社 / 比較されるサービス</label>
+                        <textarea id="competitors" rows="3" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="会社名やURL、その競合の良い点・悪い点など">${formData.target.competitors || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">参考にしたいサイト (あればURL)</label>
+                        <textarea id="reference" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition">${formData.target.reference || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStep4() {
+            const currentKeywords = formData.design.keywords || [];
+            const keywords = ['シンプル', '清潔感', '信頼感', '高級感', '親しみやすい', '未来的', '伝統的', 'ポップ', 'ナチュラル', 'ミニマル'];
+            
+            return `
+                ${renderHeader("デザイン・世界観", "どんな印象を持ってもらいたいですか？")}
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-3">キーワード（複数選択可）</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${keywords.map(kw => `
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="designKeyword" value="${kw}" class="peer sr-only" ${currentKeywords.includes(kw) ? 'checked' : ''}>
+                                <span class="inline-block px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm peer-checked:bg-primary-500 peer-checked:text-white peer-checked:border-primary-500 transition select-none">
+                                    ${kw}
+                                </span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">メインカラー</label>
+                        <div class="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                            <input type="color" id="mainColor" value="${formData.design.color}" class="w-10 h-10 rounded cursor-pointer border-0 p-0">
+                            <div class="flex-1">
+                                <div id="colorPreview" class="w-full h-4 rounded-full" style="background-color: ${formData.design.color}"></div>
+                            </div>
+                            <span id="colorCode" class="text-xs font-mono text-gray-500">${formData.design.color}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">ブランドカラーがあれば指定してください</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">フォント・雰囲気</label>
+                         <input type="text" id="fontSpec" value="${formData.design.font || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="明朝体、ゴシック体、手書き風など">
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStep5() {
+            const currentFeatures = formData.specs.features || [];
+            const features = ['お知らせ機能', 'お問い合わせフォーム', 'SNS埋め込み', 'GoogleMap', '予約システム', '会員ログイン', 'EC・決済機能', '検索機能'];
+            
+            return `
+                ${renderHeader("機能・仕様", "サイトに必要な機能を教えてください。")}
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-3">実装したい機能</label>
+                        <div class="grid grid-cols-2 gap-3">
+                             ${features.map(ft => `
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" name="features" value="${ft}" class="peer sr-only" ${currentFeatures.includes(ft) ? 'checked' : ''}>
+                                    <div class="px-3 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition flex items-center">
+                                        <i class="fa-solid fa-check text-primary-500 mr-2 opacity-0 peer-checked:opacity-100"></i>
+                                        <span>${ft}</span>
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">更新システム (CMS)</label>
+                        <select id="cms" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none">
+                            <option value="WordPress" ${formData.specs.cms === 'WordPress' ? 'selected' : ''}>WordPress（推奨・一般的）</option>
+                            <option value="Studio" ${formData.specs.cms === 'Studio' ? 'selected' : ''}>Studio（ノーコード・デザイン重視）</option>
+                            <option value="Shopify" ${formData.specs.cms === 'Shopify' ? 'selected' : ''}>Shopify（ECサイト向け）</option>
+                            <option value="静的HTML" ${formData.specs.cms === '静的HTML' ? 'selected' : ''}>更新機能なし（静的HTML）</option>
+                            <option value="相談したい" ${formData.specs.cms === '相談したい' ? 'selected' : ''}>わからないので相談したい</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">その他こだわり</label>
+                         <textarea id="otherFeatures" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="アニメーションを多用したい、など">${formData.specs.other || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStep6() {
+            return `
+                 ${renderHeader("SEO・集客", "どんなキーワードで検索されたいですか？")}
+                 <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">狙いたいキーワード</label>
+                        <input type="text" id="seoKeywords" value="${formData.seo.keywords || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="例：地域名 + 業種、サービス名など">
+                        <p class="text-xs text-gray-500 mt-1">Google検索で上位に表示させたい言葉です。</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">使いたくない表現・NGワード</label>
+                        <input type="text" id="seoExclude" value="${formData.seo.exclude || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">計測ツール導入</label>
+                        <select id="analytics" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none">
+                            <option value="GA4導入希望" ${formData.seo.tools === 'GA4導入希望' ? 'selected' : ''}>Google Analytics (GA4) を導入したい</option>
+                            <option value="現状維持" ${formData.seo.tools === '現状維持' ? 'selected' : ''}>現在のタグを引き継ぎたい</option>
+                            <option value="不要" ${formData.seo.tools === '不要' ? 'selected' : ''}>特に不要</option>
+                        </select>
+                    </div>
+                 </div>
+            `;
+        }
+
+        function renderStep7() {
+            const createRadio = (name, label, currentVal) => `
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">${label}</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="${name}" value="あり" class="mr-2 text-primary-600 focus:ring-primary-500" ${currentVal === 'あり' ? 'checked' : ''}> あり
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="${name}" value="なし" class="mr-2 text-primary-600 focus:ring-primary-500" ${currentVal === 'なし' ? 'checked' : ''}> なし
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="${name}" value="依頼したい" class="mr-2 text-primary-600 focus:ring-primary-500" ${currentVal === '依頼したい' ? 'checked' : ''}> 依頼したい
+                        </label>
+                    </div>
+                </div>
+            `;
+
+            return `
+                 ${renderHeader("素材・制作条件", "原稿や写真は準備可能ですか？")}
+                 <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700">
+                    ${createRadio('assetLogo', 'ロゴデータ', formData.assets.logo)}
+                    ${createRadio('assetPhoto', '写真素材', formData.assets.photo)}
+                    ${createRadio('assetText', '原稿テキスト', formData.assets.text)}
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <label class="block text-sm font-medium mb-1">公開希望時期</label>
+                        <input type="text" id="deadline" value="${formData.assets.deadline || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 outline-none" placeholder="例：〇〇年〇月頃、特になし">
+                    </div>
+                 </div>
+            `;
+        }
+
+        function renderStep8() {
+             return `
+                 ${renderHeader("補足・想い", "最後に、特に伝えておきたいことはありますか？")}
+                 <div>
+                    <textarea id="freeText" rows="6" class="w-full p-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none transition text-base leading-relaxed" placeholder="制作に対する想い、不安な点、こだわりのポイントなど、自由にお書きください。">${formData.extra || ''}</textarea>
+                 </div>
+            `;
+        }
+
+        function renderStep9() {
+            // Conditional Rendering based on Site Type
+            if (formData.siteType === 'lp') {
+                return renderStep9LP();
+            } else {
+                return renderStep9Corp();
+            }
+        }
+
+        function renderStep9LP() {
+            return `
+                ${renderHeader("構成案 (LP用)", "1ページで何を伝えるか整理しましょう。")}
+                <div class="space-y-4">
+                     <div>
+                        <label class="block text-sm font-medium mb-1 text-primary-600">① 一番伝えたい強み (USP)</label>
+                        <textarea id="lpMessage" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="他社にはない一番の売りは？">${formData.structure.lpMessage || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">② ユーザーが不安に思うこと</label>
+                        <textarea id="lpAnxiety" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="高いのでは？効果はあるの？など">${formData.structure.lpAnxiety || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">③ その不安への答え (解決策)</label>
+                        <textarea id="lpSolution" rows="2" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="実績〇〇件、返金保証あり、など">${formData.structure.lpSolution || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-accent-500 font-bold">④ アクション (CTA)</label>
+                        <input type="text" id="lpCta" value="${formData.structure.lpCta || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="ボタンの文言（例：無料で相談する）">
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStep9Corp() {
+             const pages = ['トップページ', 'サービス・事業紹介', '料金プラン', '会社概要', '実績紹介', 'お客様の声', 'よくある質問', 'お知らせ一覧', 'お問い合わせ', 'プライバシーポリシー', '採用情報'];
+             const currentPages = formData.structure.pages || [];
+
+             return `
+                ${renderHeader("ページ構成 (サイトマップ)", "必要なページを選んでください。")}
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-3">作成ページ</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        ${pages.map(pg => `
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="pages" value="${pg}" class="peer sr-only" ${currentPages.includes(pg) ? 'checked' : ''}>
+                                <div class="px-3 py-2 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:text-primary-700 dark:peer-checked:text-primary-300 transition">
+                                    ${pg}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">一番見てほしいページ</label>
+                    <input type="text" id="priorityPage" value="${formData.structure.priorityPage || ''}" class="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 outline-none" placeholder="例：サービス紹介、または実績紹介">
+                </div>
+            `;
+        }
+
+        function renderSummary() {
+            const summaryText = generatePromptText();
+            return `
+                <div class="text-center mb-8">
+                    <div class="inline-block p-4 rounded-full bg-green-100 text-green-600 mb-4">
+                        <i class="fa-solid fa-check text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold">ヒヤリング完了です！</h2>
+                    <p class="text-gray-500 mt-2">以下のテキストをコピーして、制作会社への依頼や<br>AIツール(ChatGPT等)への指示としてお使いください。</p>
+                </div>
+
+                <div class="relative group">
+                    <pre id="resultText" class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl text-sm font-mono whitespace-pre-wrap text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 max-h-[50vh] overflow-y-auto">${summaryText}</pre>
+                    
+                    <button onclick="copyToClipboard()" class="absolute top-4 right-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition flex items-center gap-2">
+                        <i class="fa-regular fa-copy"></i> コピー
+                    </button>
+                </div>
+
+                <div class="mt-8 flex justify-center">
+                    <p class="text-xs text-gray-400">※ この内容はブラウザに一時保存されています。</p>
+                </div>
+            `;
+        }
+
+        // --- Summary Text Generator (The Core Output) ---
+        function generatePromptText() {
+            const typeLabel = formData.siteType === 'lp' ? 'シングルページ（LP）' : 'コーポレートサイト（複数ページ）';
+            const structureSection = formData.siteType === 'lp' 
+                ? `■ ページ構成 (LP構成案)
+・USP (強み): ${formData.structure.lpMessage}
+・顧客の不安: ${formData.structure.lpAnxiety}
+・解決策: ${formData.structure.lpSolution}
+・CTA (行動): ${formData.structure.lpCta}`
+                : `■ ページ構成 (サイトマップ)
+・必要ページ: ${formData.structure.pages ? formData.structure.pages.join(', ') : '未定'}
+・最優先ページ: ${formData.structure.priorityPage}`;
+
+            // Add Interviewer Info
+            const interviewerInfo = (formData.interviewer?.company || formData.interviewer?.name) 
+                ? `制作担当: ${formData.interviewer.company} ${formData.interviewer.name}\n` 
+                : '';
+
+            return `
+# Webサイト制作要件定義書
+${interviewerInfo}
+## 1. プロジェクト概要
+・サイトタイプ: ${typeLabel}
+・会社名: ${formData.basicInfo.name}
+・現在の状況: ${formData.basicInfo.status}
+・サイト名: ${formData.basicInfo.siteName || '未定'}
+・公開希望: ${formData.assets.deadline}
+
+## 2. 目的とゴール
+・制作目的: ${formData.purpose.objective}
+・事業概要: ${formData.purpose.business}
+・最終ゴール(CV): ${formData.purpose.goal}
+・KPI/課題: ${formData.purpose.kpi}
+
+## 3. ターゲット・競合
+・ペルソナ: ${formData.target.persona}
+・競合情報: ${formData.target.competitors}
+・参考サイト: ${formData.target.reference}
+
+## 4. デザイン・機能要件
+・デザインキーワード: ${formData.design.keywords ? formData.design.keywords.join(' / ') : ''}
+・メインカラー: ${formData.design.color}
+・フォント希望: ${formData.design.font}
+・デバイス: ${formData.specs.devices}
+・CMS: ${formData.specs.cms}
+・必要機能: ${formData.specs.features ? formData.specs.features.join(', ') : ''}
+・その他機能: ${formData.specs.other}
+
+## 5. SEO・集客・素材
+・対策キーワード: ${formData.seo.keywords}
+・NGワード: ${formData.seo.exclude}
+・計測ツール: ${formData.seo.tools}
+・素材状況 (ロゴ): ${formData.assets.logo}
+・素材状況 (写真): ${formData.assets.photo}
+・素材状況 (原稿): ${formData.assets.text}
+
+${structureSection}
+
+## 6. 補足・想い
+${formData.extra}
+            `.trim();
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('resultText').innerText;
+            
+            // Try modern API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("コピーしました！");
+                }).catch(err => {
+                    console.warn('Clipboard API failed, trying fallback', err);
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast("コピーしました！");
+                } else {
+                    console.error('Fallback: Copying text command was unsuccessful');
+                    alert('コピーに失敗しました。手動でコピーしてください。');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                alert('コピーに失敗しました。手動でコピーしてください。');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+    </script>
+</body>
+</html>
