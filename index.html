@@ -126,7 +126,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container max-w-2xl mx-auto px-4 py-8 pb-32 relative">
+    <main class="flex-grow container max-w-2xl mx-auto px-4 py-8 pb-40 relative">
         <form id="hearingForm" onsubmit="return false;">
             <!-- Dynamic Content Area -->
             <div id="stepContainer" class="min-h-[60vh]">
@@ -137,14 +137,19 @@
 
     <!-- Footer / Navigation -->
     <footer class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-40">
-        <div class="max-w-2xl mx-auto flex justify-between gap-4">
-            <button id="prevBtn" onclick="prevStep()" class="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition hidden">
-                戻る
-            </button>
-            <button id="nextBtn" onclick="nextStep()" class="flex-1 px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-500/30 transition transform active:scale-95 flex items-center justify-center">
-                <span>次へ進む</span>
-                <i class="fa-solid fa-arrow-right ml-2"></i>
-            </button>
+        <div class="max-w-2xl mx-auto">
+            <div class="flex justify-between gap-4 mb-2">
+                <button id="prevBtn" onclick="prevStep()" class="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition hidden">
+                    戻る
+                </button>
+                <button id="nextBtn" onclick="nextStep()" class="flex-1 px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold shadow-lg shadow-primary-500/30 transition transform active:scale-95 flex items-center justify-center">
+                    <span>次へ進む</span>
+                    <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+            <div class="text-center text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                テスト版（ベータ版） © 2026 SPC
+            </div>
         </div>
     </footer>
 
@@ -169,7 +174,7 @@
                         <ul class="list-disc list-inside space-y-1">
                             <li><strong>自動保存:</strong> 入力内容はブラウザに自動保存されます。</li>
                             <li><strong>構成案作成:</strong> LPか複数ページかによって、最適な質問に切り替わります。</li>
-                            <li><strong>要件定義書出力:</strong> 最後に生成されるテキストは、そのまま制作会社への依頼やAIへのプロンプトに使えます。</li>
+                            <li><strong>AIコード生成:</strong> 完了画面から「AI開発用プロンプト」をコピーし、ChatGPTなどに貼れば、すぐにサイト制作を始められます。</li>
                         </ul>
                     </div>
                 </div>
@@ -994,12 +999,28 @@
                     <p class="text-gray-500 mt-2">以下のテキストをコピーして、制作会社への依頼や<br>AIツール(ChatGPT等)への指示としてお使いください。</p>
                 </div>
 
-                <div class="relative group">
-                    <pre id="resultText" class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl text-sm font-mono whitespace-pre-wrap text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 max-h-[50vh] overflow-y-auto">${summaryText}</pre>
+                <div class="relative group mb-6">
+                    <pre id="resultText" class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl text-sm font-mono whitespace-pre-wrap text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 max-h-[40vh] overflow-y-auto">${summaryText}</pre>
                     
                     <button onclick="copyToClipboard()" class="absolute top-4 right-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-600 transition flex items-center gap-2">
-                        <i class="fa-regular fa-copy"></i> コピー
+                        <i class="fa-regular fa-copy"></i> 要件定義書をコピー
                     </button>
+                </div>
+
+                <!-- AI Code Generation Button -->
+                <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1 rounded-2xl shadow-lg">
+                    <div class="bg-white dark:bg-gray-900 rounded-xl p-6 text-center">
+                        <h3 class="font-bold text-lg mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-pink-500">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>この内容でサイトを作りますか？
+                        </h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            AIへの「開発指示書(プロンプト)」を自動生成します。<br>
+                            コピーしてChatGPT等に貼り付けるだけで、コードが完成します。
+                        </p>
+                        <button onclick="copyAiPrompt()" class="w-full py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold hover:opacity-90 transition transform active:scale-95 flex items-center justify-center gap-2">
+                            <span>🚀 AI開発用プロンプトをコピー</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mt-8 flex justify-center">
@@ -1071,9 +1092,41 @@ ${formData.extra}
             `.trim();
         }
 
+        // --- New: Generate AI Development Prompt ---
+        function generateAiDevelopmentPrompt() {
+            return `
+あなたは熟練のシニアフロントエンドエンジニア兼UIデザイナーです。
+以下の「Webサイト制作要件定義書」に基づき、モダンで美しく、コンバージョン率の高いWebサイトのコードを作成してください。
+
+【出力要件】
+1. **1つのHTMLファイル**（index.html）として出力してください。
+2. **Tailwind CSS (CDN)** を使用し、デザイン要件（メインカラー: ${formData.design.color}、キーワード: ${formData.design.keywords ? formData.design.keywords.join('/') : ''}）を反映した美しいUIにしてください。
+3. **レスポンシブ対応**を完璧に行い、スマホ・タブレット・PCすべてで見やすくしてください。
+4. 画像はダミー画像サービス（https://placehold.co/600x400 など）を使用し、レイアウトが崩れないようにしてください。
+5. **JavaScript** は必要最小限（ハンバーガーメニューの開閉など）にし、HTML内に含めてください。
+6. FontAwesome (CDN) を使用して適切なアイコンを配置してください。
+7. 日本語フォントは "Noto Sans JP" をGoogle Fontsから読み込んで適用してください。
+
+【Webサイト制作要件定義書】
+${generatePromptText()}
+
+【コード作成のお願い】
+上記の要件を満たす、即座にブラウザで確認可能な完成されたHTMLファイルを作成してください。
+セクションごとに分かりやすいコメントを入れてください。
+`;
+        }
+
         function copyToClipboard() {
             const text = document.getElementById('resultText').innerText;
-            
+            handleCopy(text);
+        }
+
+        function copyAiPrompt() {
+            const prompt = generateAiDevelopmentPrompt();
+            handleCopy(prompt);
+        }
+
+        function handleCopy(text) {
             // Try modern API first
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
